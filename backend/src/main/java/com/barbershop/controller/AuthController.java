@@ -7,6 +7,7 @@ import com.barbershop.model.User;
 import com.barbershop.repository.BarbershopRepository;
 import com.barbershop.repository.UserRepository;
 import com.barbershop.security.JwtService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -37,7 +38,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest req) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req) {
         authManager.authenticate(new UsernamePasswordAuthenticationToken(req.username(), req.password()));
         User user = userRepo.findByUsername(req.username()).orElseThrow();
         String token = jwtService.generateToken(req.username());
@@ -46,7 +47,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest req) {
         if (userRepo.existsByUsername(req.username()))
             return ResponseEntity.badRequest().body("Username already exists");
         var shop = req.barbershopId() != null ? shopRepo.findById(req.barbershopId()).orElse(null) : null;

@@ -1,6 +1,8 @@
 package com.barbershop.service;
 
 import com.barbershop.dto.Dtos.*;
+import com.barbershop.exception.BusinessException;
+import com.barbershop.exception.ScheduleConflictException;
 import com.barbershop.model.*;
 import com.barbershop.repository.*;
 import org.springframework.stereotype.Service;
@@ -33,6 +35,30 @@ public class AppointmentService {
         com.barbershop.model.Service service = serviceRepo.findById(req.serviceId()).orElseThrow();
         Barbershop shop = shopRepo.findById(req.barbershopId()).orElseThrow();
 
+        if (req.date().isBefore(LocalDate.now())) {
+            throw new BusinessException("La fecha de la cita no puede ser en el pasado");
+        }
+        if (!barber.isActive() || barber.getRole() != Role.BARBER
+                || barber.getBarbershop() == null || !barber.getBarbershop().getId().equals(shop.getId())) {
+            throw new BusinessException("El barbero no está disponible en esta barbería");
+        }
+        if (service.getBarbershop() == null || !service.getBarbershop().getId().equals(shop.getId())) {
+            throw new BusinessException("El servicio no pertenece a esta barbería");
+        }
+
+        LocalTime startTime = req.startTime();
+        LocalTime endTime = startTime.plusMinutes(service.getDurationMinutes());
+        if (startTime.isBefore(shop.getOpenTime()) || endTime.isAfter(shop.getCloseTime())) {
+            throw new BusinessException("El horario solicitado está fuera del horario de atención");
+        }
+
+        boolean overlaps = appointmentRepo.findByBarberIdAndDate(barber.getId(), req.date()).stream()
+            .anyMatch(a -> a.getStatus() != AppointmentStatus.CANCELLED
+                && startTime.isBefore(a.getEndTime()) && a.getStartTime().isBefore(endTime));
+        if (overlaps) {
+            throw new ScheduleConflictException("El barbero ya tiene una cita en ese horario");
+        }
+
         Appointment a = Appointment.builder()
             .clientName(req.clientName())
             .clientPhone(req.clientPhone())
@@ -40,8 +66,8 @@ public class AppointmentService {
             .clientWhatsapp(req.clientWhatsapp())
             .notes(req.notes())
             .date(req.date())
-            .startTime(req.startTime())
-            .endTime(req.startTime().plusMinutes(service.getDurationMinutes()))
+            .startTime(startTime)
+            .endTime(endTime)
             .status(AppointmentStatus.CONFIRMED)
             .barber(barber)
             .service(service)
@@ -95,16 +121,18 @@ public class AppointmentService {
         LocalTime current = shop.getOpenTime();
         LocalTime close = shop.getCloseTime();
         int duration = service.getDurationMinutes();
+        boolean isToday = date.isEqual(LocalDate.now());
+        LocalTime now = LocalTime.now();
 
         while (!current.plusMinutes(duration).isAfter(close)) {
             final LocalTime slotStart = current;
             final LocalTime slotEnd = current.plusMinutes(duration);
             boolean occupied = existing.stream().anyMatch(a ->
-                a.getStatus() != AppointmentStatus.CANCELLED &&
-                !slotStart.isBefore(a.getStartTime()) && slotStart.isBefore(a.getEndTime()) ||
-                !a.getStartTime().isBefore(slotStart) && a.getStartTime().isBefore(slotEnd)
+                a.getStatus() != AppointmentStatus.CANCELLED
+                    && slotStart.isBefore(a.getEndTime()) && a.getStartTime().isBefore(slotEnd)
             );
-            slots.add(new TimeSlot(slotStart, slotEnd, !occupied));
+            boolean past = isToday && slotStart.isBefore(now);
+            slots.add(new TimeSlot(slotStart, slotEnd, !occupied && !past));
             current = current.plusMinutes(shop.getSlotDurationMinutes());
         }
         return slots;
@@ -114,7 +142,7 @@ public class AppointmentService {
         List<Appointment> all = appointmentRepo.findByBarbershopIdOrderByDateDescStartTimeDesc(shopId);
         long today = all.stream().filter(a -> a.getDate().equals(LocalDate.now())).count();
         long pending = all.stream().filter(a -> a.getStatus() == AppointmentStatus.PENDING).count();
-        long barbers = userRepo.findByBarbershopIdAndRole(shopId, Role.BARBER).size();
+        long barbers = userRepo.findByBarbershopIdAndRoleAndActiveTrue(shopId, Role.BARBER).size();
         return new DashboardStats(all.size(), today, pending, barbers);
     }
 

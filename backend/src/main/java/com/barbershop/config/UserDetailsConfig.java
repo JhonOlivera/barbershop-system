@@ -3,9 +3,11 @@ package com.barbershop.config;
 import com.barbershop.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import java.util.List;
 
 @Configuration
 public class UserDetailsConfig {
@@ -24,7 +26,8 @@ public class UserDetailsConfig {
             return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUsername())
                 .password(user.getPassword())
-                .roles(user.getRole().name())
+                .disabled(!user.isActive())
+                .authorities(List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())))
                 .build();
         };
     }
