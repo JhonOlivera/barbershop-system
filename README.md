@@ -80,6 +80,4 @@ La app queda disponible en `http://localhost:4200` y apunta a `http://localhost:
 | `GET /api/barbershops`, `/{id}` | cualquier usuario autenticado |
 | `PUT /api/barbershops/{id}` | ADMIN (de su propia barbería) |
 
-## Capturas
 
-_Pendiente: agregar capturas de pantalla de la app (login, dashboard, reserva pública, etc.)._
