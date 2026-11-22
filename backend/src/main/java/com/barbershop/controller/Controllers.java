@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/services")
@@ -156,6 +157,11 @@ class PublicController {
     PublicController(BarbershopRepository b, ServiceRepository s, UserRepository u,
                       com.barbershop.service.AppointmentService appointmentService) {
         shopRepo = b; serviceRepo = s; userRepo = u; this.appointmentService = appointmentService;
+    }
+
+    @GetMapping("/health")
+    public Map<String, String> health() {
+        return Map.of("status", "ok");
     }
 
     @GetMapping("/barbershops")
