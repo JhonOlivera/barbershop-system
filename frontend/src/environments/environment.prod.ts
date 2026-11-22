@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: '__API_URL__'
+  apiUrl: 'https://barbershop-system-3the.onrender.com/api'
 };
