@@ -16,7 +16,7 @@ BarberBook es un sistema de reservas para barberías. Cada barbería (tenant) ge
 
 ## Stack
 
-- **Backend**: Java 21, Spring Boot 3.4.3 (Web, Security, Data JPA, Validation), MySQL, JWT (`jjwt`), Twilio SDK, Maven.
+- **Backend**: Java 21, Spring Boot 3.4.3 (Web, Security, Data JPA, Validation), MySQL (local) / PostgreSQL (producción), JWT (`jjwt`), Twilio SDK, Maven.
 - **Frontend**: Angular 21 (componentes standalone, signals), TypeScript.
 
 ## Cómo correrlo en local
@@ -28,7 +28,7 @@ BarberBook es un sistema de reservas para barberías. Cada barbería (tenant) ge
 
    | Variable | Descripción | Default local |
    |---|---|---|
-   | `DB_URL` | URL JDBC completa | `jdbc:mysql://localhost:3306/barbershopdb?...` |
+   | `DB_URL` | URL JDBC completa (MySQL en local, PostgreSQL en producción; Spring/Hibernate detectan el driver y el dialecto automáticamente a partir de la URL) | Local: `jdbc:mysql://localhost:3306/barbershopdb?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Bogota&allowPublicKeyRetrieval=true` · Producción: `jdbc:postgresql://HOST:PORT/defaultdb?sslmode=require` |
    | `DB_USER` | Usuario de la base de datos | `root` |
    | `DB_PASSWORD` | Contraseña de la base de datos | _(vacío)_ |
    | `JWT_SECRET` | Clave para firmar los JWT | _(obligatoria, sin default)_ |
