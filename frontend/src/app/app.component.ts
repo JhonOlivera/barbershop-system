@@ -1,25 +1,34 @@
-import { Component } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, signal } from '@angular/core';
+import { NavigationEnd, Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from './services/auth.service';
+import { NotificationService } from './services/notification.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
   template: `
-    <div class="layout" *ngIf="auth.currentUser(); else noAuth">
+    <div class="toast" *ngIf="notifications.message()">
+      {{ notifications.message() }}
+      <button class="toast-close" (click)="notifications.clear()">✕</button>
+    </div>
+    <div class="layout" *ngIf="auth.currentUser() && !isPublicPage(); else noAuth">
       <nav class="sidebar">
         <div class="logo">✂️ BarberBook</div>
         <ul>
-          <li><a routerLink="/dashboard" routerLinkActive="active">🏠 Dashboard</a></li>
+          <li *ngIf="auth.isAdmin()">
+            <a routerLink="/dashboard" routerLinkActive="active">🏠 Dashboard</a>
+          </li>
           <li *ngIf="auth.isAdmin() || auth.isBarber()">
             <a routerLink="/appointments" routerLinkActive="active">📅 Citas</a>
           </li>
           <li *ngIf="auth.isClient()">
             <a routerLink="/my-appointments" routerLinkActive="active">📅 Mis Citas</a>
           </li>
-          <li><a routerLink="/booking" routerLinkActive="active">➕ Nueva Cita</a></li>
+          <li *ngIf="auth.isClient()">
+            <a routerLink="/booking" routerLinkActive="active">➕ Nueva Cita</a>
+          </li>
           <li *ngIf="auth.isAdmin()">
             <a routerLink="/services" routerLinkActive="active">💈 Servicios</a>
           </li>
@@ -54,8 +63,28 @@ import { AuthService } from './services/auth.service';
     .btn-logout { margin-top: 12px; width: 100%; background: transparent; border: 1px solid #333; color: #a0a0a0; padding: 8px; border-radius: 6px; cursor: pointer; }
     .btn-logout:hover { border-color: #f44336; color: #f44336; }
     .content { flex: 1; padding: 32px; overflow-y: auto; }
+    .toast {
+      position: fixed; top: 16px; right: 16px; z-index: 1000;
+      background: #242424; border: 1px solid #f44336; color: #fff;
+      padding: 14px 18px; border-radius: 10px; max-width: 360px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4); font-size: 14px;
+      display: flex; align-items: flex-start; gap: 12px;
+    }
+    .toast-close { background: transparent; border: none; color: #a0a0a0; padding: 0; font-size: 14px; }
+    @media (max-width: 640px) {
+      .toast { left: 16px; right: 16px; top: 12px; max-width: none; }
+    }
   `]
 })
 export class AppComponent {
-  constructor(public auth: AuthService) {}
+  isPublicPage = signal(false);
+
+  constructor(public auth: AuthService, public notifications: NotificationService, private router: Router) {
+    this.isPublicPage.set(this.router.url.startsWith('/reservar'));
+    this.router.events.subscribe(event => {
+      if (event instanceof NavigationEnd) {
+        this.isPublicPage.set(event.urlAfterRedirects.startsWith('/reservar'));
+      }
+    });
+  }
 }

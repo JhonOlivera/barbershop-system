@@ -53,7 +53,7 @@ export class LoginComponent {
     this.loading = true;
     this.error = '';
     this.auth.login(this.username, this.password).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
+      next: () => this.router.navigateByUrl(this.auth.homeRoute()),
       error: () => { this.error = 'Usuario o contraseña incorrectos'; this.loading = false; }
     });
   }

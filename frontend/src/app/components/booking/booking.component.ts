@@ -100,8 +100,8 @@ export class BookingComponent implements OnInit {
     this.form.barbershopId = shopId;
     const user = this.auth.currentUser();
     if (user) { this.form.clientName = user.fullName; }
-    this.api.getServices(shopId).subscribe(s => this.services = s);
-    this.api.getBarbers(shopId).subscribe(b => this.barbers = b);
+    this.api.getPublicServices(shopId).subscribe(s => this.services = s);
+    this.api.getPublicBarbers(shopId).subscribe(b => this.barbers = b);
   }
 
   loadSlots() {

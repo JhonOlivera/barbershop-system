@@ -2,6 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 export interface User {
   username: string;
@@ -13,7 +14,7 @@ export interface User {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private apiUrl = 'http://localhost:8080/api/auth';
+  private apiUrl = `${environment.apiUrl}/auth`;
   currentUser = signal<User | null>(null);
 
   constructor(private http: HttpClient, private router: Router) {
@@ -41,4 +42,13 @@ export class AuthService {
   isClient() { return this.currentUser()?.role === 'CLIENT'; }
   getToken() { return this.currentUser()?.token; }
   getShopId() { return this.currentUser()?.barbershopId; }
+
+  homeRoute(): string {
+    switch (this.currentUser()?.role) {
+      case 'ADMIN': return '/dashboard';
+      case 'BARBER': return '/appointments';
+      case 'CLIENT': return '/my-appointments';
+      default: return '/login';
+    }
+  }
 }

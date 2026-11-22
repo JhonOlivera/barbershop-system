@@ -80,7 +80,7 @@ export class RegisterComponent implements OnInit {
       next: () => {
         this.success = '¡Cuenta creada! Iniciando sesión...';
         this.auth.login(this.form.username, this.form.password).subscribe({
-          next: () => this.router.navigate(['/dashboard']),
+          next: () => this.router.navigateByUrl(this.auth.homeRoute()),
           error: () => this.router.navigate(['/login'])
         });
       },
